@@ -9,6 +9,7 @@ app.use(express.json())
 // 用来解析客户端传来的x-www-form-urlencoded格式数据
 app.use(express.urlencoded())
 
+// 查询全部任务
 app.get('/todos', async (req, res) => {
   try{
     const db = await getDb()
@@ -20,6 +21,7 @@ app.get('/todos', async (req, res) => {
   }
 })
 
+// 根据id查询任务
 app.get('/todos/:id',async (req, res) => {
   try {
     const db = await getDb()
@@ -33,6 +35,7 @@ app.get('/todos/:id',async (req, res) => {
   }
 })
 
+// 新增
 app.post('/todos/', async (req, res) => {
   try {
       // 1.获取客户端请求参数
@@ -63,18 +66,55 @@ app.post('/todos/', async (req, res) => {
   }
 })
 
-app.patch('/todos/:id', (req, res) => {
-  res.send(`patch /todos/${req.params.id}`)
+// 修改任务
+app.patch('/todos/:id',async (req, res) => {
+  try {
+    // 1. 获取表单数据
+    const todo = req.body
+    // 2.查找到要修改的任务型项
+    const db = await getDb()
+
+    const ret = db.todos.findIndex(todo => todo.id === Number.parseInt(req.params.id))
+
+    if(!ret){
+      return res.status(404).end()
+    }
+
+    // 将todo的内容合并到ret上
+    Object.assign(ret, todo)
+
+    await saveDb(db)
+
+    // 发送响应,修改成功返回201状态码
+    res.status(201).json(todo)
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    })
+  }
 })
 
+// 删除任务
+app.delete('/todos/:id',async (req, res) => {
+  try {
+    const todoId = Number.parseInt(req.params.id)
+    const db = await getDb()
+    const index = db.todos.findIndex(todo => todo.id === todoId)
+    if(index === -1){
+      return res.status(404).end()
+    }
+    db.todos.splice(index, 1)
+    await saveDb(db)
+    // 删除成功返回204响应码
+    res.status(204).end()
 
-
-app.delete('/todos/:id', (req, res) => {
-  res.send(`delete /todos/${req.params.id}`)
+  } catch (err) {
+    res.status(500).json({
+      error: res.message
+    })
+  }
 })
-
-
-
 
 app.listen(3000, ()=>{
   console.log(`Server running at http://localhost:3000`)
