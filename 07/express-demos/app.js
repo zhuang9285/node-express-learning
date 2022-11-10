@@ -16,6 +16,9 @@ app.use(express.json())
 // 路径限制
 app.use('/abc', router)
 
+
+
+
 // 在所有的中间件之后挂载错误处理中间件，四个参数都必须写，少一个就不是错误处理
 app.use((err, req, res,next) => {
   console.log('错误', err)
